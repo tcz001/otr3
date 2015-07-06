@@ -14,6 +14,3 @@ before_install:
   - mkdir -p $LOCAL_GOPATH/src
   - mkdir -p $LOCAL_GOPATH/pkg
   - mkdir -p $LOCAL_GOPATH/bin
-
-install:
-  - go get gopkg.in/check.v1

@@ -25,6 +25,10 @@ type Conversation struct {
 	stopSendingWhitespaceTags bool
 
 	eventHandler EventHandler
+	receiveChan  chan ValidMessage
+	sendChan     chan ValidMessage
+	toSendChan   chan ValidMessage
+	plainChan    chan []byte
 }
 
 type msgState int

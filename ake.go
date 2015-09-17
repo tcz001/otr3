@@ -1,9 +1,11 @@
 package otr3
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/gob"
 	"io"
 	"math/big"
 )
@@ -366,5 +368,83 @@ func checkDecryptedGx(decryptedGx, hashedGx []byte) error {
 		return newOtrError("bad commit MAC in reveal signature message")
 	}
 
+	return nil
+}
+
+func (c ake) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	encoder := gob.NewEncoder(w)
+	if c.secretExponent != nil {
+		err := encoder.Encode(c.secretExponent)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c.ourPublicValue != nil {
+		err := encoder.Encode(c.ourPublicValue)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c.theirPublicValue != nil {
+		err := encoder.Encode(c.theirPublicValue)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err := encoder.Encode(c.r)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.encryptedGx)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.hashedGx)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.revealKey)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.sigKey)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (c *ake) GobDecode(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	decoder := gob.NewDecoder(r)
+	err := decoder.Decode(&c.secretExponent)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.ourPublicValue)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.theirPublicValue)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.encryptedGx)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.hashedGx)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.revealKey)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.sigKey)
+	if err != nil {
+		return err
+	}
 	return nil
 }

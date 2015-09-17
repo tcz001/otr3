@@ -1,10 +1,12 @@
 package otr3
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/gob"
 	"hash"
 	"io"
 	"math/big"
@@ -18,6 +20,42 @@ type dhKeyPair struct {
 type akeKeys struct {
 	c      [aes.BlockSize]byte
 	m1, m2 [sha256.Size]byte
+}
+
+func (c akeKeys) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	encoder := gob.NewEncoder(w)
+	err := encoder.Encode(c.c)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.m1)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(c.m2)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (c akeKeys) GobDecode(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	decoder := gob.NewDecoder(r)
+	err := decoder.Decode(&c.c)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.m1)
+	if err != nil {
+		return err
+	}
+	err = decoder.Decode(&c.m2)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type macKey [sha1.Size]byte

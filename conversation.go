@@ -1,6 +1,12 @@
 package otr3
 
-import "io"
+import (
+	"bytes"
+	"encoding/gob"
+	"fmt"
+	"io"
+	"log"
+)
 
 type msgState int
 
@@ -140,4 +146,49 @@ func (c *Conversation) SetMessageEventHandler(handler MessageEventHandler) {
 // SetSecurityEventHandler assigns handler for SecurityEvent
 func (c *Conversation) SetSecurityEventHandler(handler SecurityEventHandler) {
 	c.securityEventHandler = handler
+}
+
+func (c Conversation) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	encoder := gob.NewEncoder(w)
+	err := encoder.Encode(&c.version)
+	if err != nil {
+		return nil, err
+	}
+	err = encoder.Encode(&c.ake)
+	if err != nil {
+		return nil, err
+	}
+	return w.Bytes(), nil
+}
+
+func (c *Conversation) GobDecode(buf []byte) error {
+	r := bytes.NewBuffer(buf)
+	decoder := gob.NewDecoder(r)
+	err := decoder.Decode(&c.version)
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(&c.ake)
+}
+
+func (c *Conversation) ToGob(buf *bytes.Buffer) {
+	gob.Register(otrV3{})
+
+	// Create an encoder and send a value.
+	enc := gob.NewEncoder(buf)
+	err := enc.Encode(c)
+	if err != nil {
+		log.Fatal("encode:", err)
+	}
+
+	// Create a decoder and receive a value.
+	dec := gob.NewDecoder(buf)
+	var v Conversation
+	err = dec.Decode(&v)
+	// if err != nil {
+	// 	log.Fatal("decode:", err)
+	// }
+	fmt.Println(v.version.protocolVersion())
+	fmt.Println(v.ake)
 }
